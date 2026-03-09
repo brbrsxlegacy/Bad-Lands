@@ -3,287 +3,201 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NexaChat</title>
+  <title>PixelRoom Chat</title>
   <style>
     :root {
       --bg: #0b141a;
       --panel: #111b21;
       --panel-2: #202c33;
-      --panel-3: #182229;
       --text: #e9edef;
       --muted: #8696a0;
       --accent: #25d366;
-      --accent-2: #128c7e;
       --line: rgba(255,255,255,0.08);
-      --bubble-me: #005c4b;
-      --bubble-them: #202c33;
-      --danger: #ff6b6b;
-      --shadow: 0 20px 50px rgba(0,0,0,0.35);
+      --me: #005c4b;
+      --them: #202c33;
+      --danger: #ff7b7b;
     }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Inter, Arial, sans-serif; }
     body {
       min-height: 100vh;
-      background:
-        radial-gradient(circle at top left, rgba(37,211,102,0.08), transparent 25%),
-        linear-gradient(180deg, #0f1a20 0%, #0a1014 100%);
+      background: linear-gradient(180deg, #101d24 0%, #0a1217 100%);
       color: var(--text);
     }
-
     .app {
       min-height: 100vh;
       display: grid;
       place-items: center;
-      padding: 18px;
+      padding: 16px;
     }
-
     .shell {
       width: min(1400px, 100%);
-      min-height: 92vh;
-      border: 1px solid var(--line);
-      border-radius: 28px;
+      min-height: 94vh;
+      border-radius: 26px;
       overflow: hidden;
-      background: rgba(9, 15, 19, 0.86);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(14px);
+      background: rgba(8, 13, 17, 0.9);
+      border: 1px solid var(--line);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.35);
     }
-
-    .login-screen {
+    .hidden { display: none !important; }
+    .auth {
+      min-height: 94vh;
       display: grid;
       grid-template-columns: 1.05fr 0.95fr;
-      min-height: 92vh;
     }
-
-    .hero {
+    .auth-hero {
       padding: 56px;
       background:
-        radial-gradient(circle at top left, rgba(37,211,102,0.18), transparent 22%),
-        radial-gradient(circle at bottom right, rgba(18,140,126,0.14), transparent 20%),
-        linear-gradient(145deg, #0d171d, #101f27);
+        radial-gradient(circle at top left, rgba(37,211,102,0.16), transparent 24%),
+        linear-gradient(145deg, #0f171d, #132028);
       border-right: 1px solid var(--line);
       display: flex;
       flex-direction: column;
       justify-content: center;
       gap: 22px;
     }
-
     .badge {
       width: fit-content;
       padding: 10px 14px;
       border-radius: 999px;
-      border: 1px solid rgba(37,211,102,0.24);
       background: rgba(37,211,102,0.1);
-      color: #8df0b0;
+      border: 1px solid rgba(37,211,102,0.2);
+      color: #95efb6;
       font-size: 14px;
       font-weight: 700;
     }
-
-    .hero h1 {
-      font-size: clamp(36px, 5vw, 68px);
+    .auth-hero h1 {
+      font-size: clamp(34px, 5vw, 66px);
       line-height: 0.95;
       letter-spacing: -0.04em;
       max-width: 10ch;
     }
-
-    .hero p {
-      max-width: 60ch;
+    .auth-hero p {
       color: var(--muted);
-      font-size: 17px;
       line-height: 1.8;
+      max-width: 58ch;
+      font-size: 17px;
     }
-
-    .hero-grid {
+    .hero-cards {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 14px;
-      margin-top: 8px;
     }
-
     .hero-card {
       padding: 18px;
-      border-radius: 22px;
+      border-radius: 20px;
       background: rgba(255,255,255,0.04);
       border: 1px solid var(--line);
     }
-
-    .hero-card strong {
-      display: block;
-      font-size: 22px;
-      margin-bottom: 8px;
-    }
-
-    .hero-card span {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.6;
-    }
-
-    .auth {
+    .hero-card strong { display: block; margin-bottom: 8px; font-size: 20px; }
+    .hero-card span { color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .auth-panel {
       display: grid;
       place-items: center;
-      padding: 36px;
-      background: linear-gradient(180deg, #0f171d, #0b1217);
+      padding: 30px;
+      background: linear-gradient(180deg, #0f171d, #0c1318);
     }
-
     .auth-card {
       width: min(520px, 100%);
       padding: 32px;
       border-radius: 28px;
-      background: rgba(17,27,33,0.95);
+      background: var(--panel);
       border: 1px solid var(--line);
-      box-shadow: var(--shadow);
     }
-
-    .auth-top {
+    .auth-card h2 { font-size: 32px; margin-bottom: 10px; }
+    .auth-card p { color: var(--muted); line-height: 1.7; margin-bottom: 22px; }
+    .tabs {
       display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      align-items: start;
-      margin-bottom: 22px;
+      gap: 8px;
+      margin-bottom: 18px;
     }
-
-    .auth-top h2 {
-      font-size: 32px;
-      margin-bottom: 8px;
-    }
-
-    .auth-top p {
-      color: var(--muted);
-      line-height: 1.7;
-      font-size: 15px;
-    }
-
-    .toggle-theme {
+    .tab {
+      flex: 1;
+      height: 46px;
+      border-radius: 16px;
       border: 1px solid var(--line);
       background: rgba(255,255,255,0.04);
       color: var(--text);
-      border-radius: 16px;
-      padding: 10px 14px;
       cursor: pointer;
+      font-weight: 700;
     }
-
+    .tab.active {
+      background: rgba(37,211,102,0.14);
+      border-color: rgba(37,211,102,0.26);
+      color: #9af0ba;
+    }
     .form {
       display: grid;
-      gap: 16px;
+      gap: 14px;
     }
-
-    .field {
-      display: grid;
-      gap: 8px;
-    }
-
-    .field label {
-      color: var(--muted);
-      font-size: 14px;
-      font-weight: 600;
-    }
-
+    .field { display: grid; gap: 8px; }
+    .field label { color: var(--muted); font-size: 14px; font-weight: 600; }
     .field input {
-      height: 54px;
-      border-radius: 18px;
+      height: 52px;
+      border-radius: 16px;
       border: 1px solid var(--line);
       background: #0c1419;
       color: var(--text);
-      padding: 0 16px;
+      padding: 0 14px;
       outline: none;
-      font-size: 15px;
     }
-
-    .field input:focus {
-      border-color: rgba(37,211,102,0.45);
-    }
-
-    .password-wrap {
-      position: relative;
-    }
-
-    .password-toggle {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      border: none;
-      background: transparent;
-      color: var(--muted);
-      cursor: pointer;
-      padding: 8px;
-    }
-
-    .note, .error {
+    .field input:focus { border-color: rgba(37,211,102,0.36); }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .error, .info {
       padding: 14px 16px;
-      border-radius: 18px;
+      border-radius: 16px;
       font-size: 14px;
       line-height: 1.6;
     }
-
-    .note {
-      background: rgba(37,211,102,0.1);
-      border: 1px solid rgba(37,211,102,0.2);
-      color: #95efb6;
-    }
-
     .error {
       display: none;
-      background: rgba(255,107,107,0.12);
-      border: 1px solid rgba(255,107,107,0.24);
-      color: #ff9c9c;
+      background: rgba(255,123,123,0.12);
+      border: 1px solid rgba(255,123,123,0.24);
+      color: #ffabab;
     }
-
-    .error.show {
-      display: block;
+    .error.show { display: block; }
+    .info {
+      background: rgba(37,211,102,0.1);
+      border: 1px solid rgba(37,211,102,0.18);
+      color: #95efb6;
     }
-
-    .primary-btn {
-      height: 54px;
+    .primary {
+      height: 52px;
       border: none;
-      border-radius: 18px;
-      cursor: pointer;
-      background: linear-gradient(135deg, var(--accent), #5df08f);
-      color: #062010;
-      font-size: 16px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent), #73f08b);
+      color: #052112;
       font-weight: 800;
+      cursor: pointer;
     }
-
-    .chat-screen {
-      display: none;
-      min-height: 92vh;
+    .chat {
+      min-height: 94vh;
+      display: grid;
       grid-template-columns: 360px 1fr;
     }
-
     .sidebar {
       background: var(--panel);
       border-right: 1px solid var(--line);
       display: flex;
       flex-direction: column;
-      min-height: 92vh;
+      min-height: 94vh;
     }
-
     .sidebar-top, .chat-top {
       padding: 16px;
       border-bottom: 1px solid var(--line);
       background: var(--panel-2);
     }
-
-    .sidebar-user, .chat-user {
+    .identity {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 14px;
+      gap: 12px;
     }
-
-    .identity {
+    .left-id {
       display: flex;
       align-items: center;
       gap: 12px;
       min-width: 0;
     }
-
     .avatar {
       width: 46px;
       height: 46px;
@@ -291,34 +205,23 @@
       display: grid;
       place-items: center;
       font-weight: 800;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      background: linear-gradient(135deg, var(--accent), #0ea67c);
       color: #04150d;
       flex-shrink: 0;
     }
-
-    .identity-text {
-      min-width: 0;
-    }
-
-    .identity-text strong {
+    .meta strong {
       display: block;
       font-size: 15px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-
-    .identity-text span {
+    .meta span {
       color: var(--muted);
       font-size: 13px;
     }
-
-    .top-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .icon-btn {
+    .actions { display: flex; gap: 8px; }
+    .icon {
       width: 40px;
       height: 40px;
       border-radius: 14px;
@@ -327,13 +230,8 @@
       color: var(--text);
       cursor: pointer;
     }
-
-    .search-wrap {
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .search-wrap input {
+    .search { padding: 14px; border-bottom: 1px solid var(--line); }
+    .search input, .composer input {
       width: 100%;
       height: 48px;
       border-radius: 16px;
@@ -343,78 +241,48 @@
       padding: 0 14px;
       outline: none;
     }
-
     .chat-list {
+      flex: 1;
       overflow-y: auto;
       display: grid;
       gap: 8px;
       padding: 10px;
     }
-
     .chat-item {
       width: 100%;
       text-align: left;
       padding: 12px;
-      border-radius: 20px;
+      border-radius: 18px;
       border: 1px solid transparent;
       background: transparent;
       color: var(--text);
       cursor: pointer;
     }
-
     .chat-item.active {
       background: rgba(37,211,102,0.12);
       border-color: rgba(37,211,102,0.18);
     }
-
-    .chat-item-row {
-      display: flex;
-      align-items: start;
-      gap: 12px;
-    }
-
-    .chat-badge {
+    .chat-row { display: flex; gap: 12px; align-items: start; }
+    .small-avatar {
       width: 42px;
       height: 42px;
-      border-radius: 16px;
+      border-radius: 15px;
       display: grid;
       place-items: center;
       font-weight: 800;
       color: white;
       flex-shrink: 0;
+      background: linear-gradient(135deg, #4ade80, #06b6d4);
     }
-
-    .c1 { background: linear-gradient(135deg, #22c55e, #14b8a6); }
-    .c2 { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-    .c3 { background: linear-gradient(135deg, #d946ef, #ec4899); }
-    .c4 { background: linear-gradient(135deg, #8b5cf6, #4f46e5); }
-
-    .chat-main-text {
-      min-width: 0;
-      flex: 1;
-    }
-
-    .chat-main-text strong,
-    .chat-main-text p {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .chat-main-text small,
-    .chat-main-text p {
-      color: var(--muted);
-    }
-
-    .chat-main {
+    .chat-text { min-width: 0; flex: 1; }
+    .chat-text strong, .chat-text p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chat-text small, .chat-text p { color: var(--muted); }
+    .main {
       display: flex;
       flex-direction: column;
-      min-height: 92vh;
-      background:
-        radial-gradient(circle at top left, rgba(37,211,102,0.06), transparent 18%),
-        var(--bg);
+      min-height: 94vh;
+      background: var(--bg);
     }
-
     .messages {
       flex: 1;
       overflow-y: auto;
@@ -422,29 +290,22 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+      background:
+        radial-gradient(circle at top left, rgba(37,211,102,0.05), transparent 20%),
+        var(--bg);
     }
-
     .msg {
-      max-width: min(78%, 620px);
+      max-width: min(80%, 650px);
       padding: 12px 14px;
-      border-radius: 20px;
-      line-height: 1.7;
-      box-shadow: 0 10px 24px rgba(0,0,0,0.12);
-      border: 1px solid var(--line);
+      border-radius: 18px;
       font-size: 15px;
+      line-height: 1.7;
+      border: 1px solid var(--line);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
     }
-
-    .msg.them {
-      background: var(--bubble-them);
-      align-self: flex-start;
-    }
-
-    .msg.me {
-      background: var(--bubble-me);
-      align-self: flex-end;
-    }
-
-    .meta {
+    .msg.them { align-self: flex-start; background: var(--them); }
+    .msg.me { align-self: flex-end; background: var(--me); }
+    .msg-meta {
       margin-top: 8px;
       display: flex;
       justify-content: flex-end;
@@ -452,366 +313,205 @@
       font-size: 11px;
       color: rgba(255,255,255,0.7);
     }
-
     .composer {
-      padding: 14px;
-      border-top: 1px solid var(--line);
-      background: var(--panel-2);
       display: flex;
       gap: 10px;
       align-items: center;
+      padding: 14px;
+      border-top: 1px solid var(--line);
+      background: var(--panel-2);
     }
-
-    .composer input {
-      flex: 1;
-      height: 52px;
-      border-radius: 18px;
-      border: 1px solid var(--line);
-      background: #0c1419;
-      color: var(--text);
-      padding: 0 16px;
-      outline: none;
-    }
-
-    .send-btn {
-      height: 52px;
-      padding: 0 22px;
+    .composer .grow { flex: 1; }
+    .send {
+      height: 48px;
+      padding: 0 18px;
+      border-radius: 16px;
       border: none;
-      border-radius: 18px;
-      background: linear-gradient(135deg, var(--accent), #5df08f);
-      color: #062010;
+      background: linear-gradient(135deg, var(--accent), #73f08b);
+      color: #052112;
       font-weight: 800;
       cursor: pointer;
     }
-
-    .hint {
+    .subbar {
+      padding: 0 18px 14px;
       color: var(--muted);
       font-size: 12px;
-      padding: 0 18px 12px;
     }
-
-    .status {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--accent);
-    }
-
-    body.light {
-      --bg: #efeae2;
-      --panel: #f7f8fa;
-      --panel-2: #ffffff;
-      --panel-3: #eef1f4;
-      --text: #111b21;
-      --muted: #667781;
-      --line: rgba(17,27,33,0.08);
-      --bubble-me: #d9fdd3;
-      --bubble-them: #ffffff;
-      background: linear-gradient(180deg, #dfe7ec 0%, #eef3f6 100%);
-    }
-
     @media (max-width: 980px) {
-      .login-screen,
-      .chat-screen {
-        grid-template-columns: 1fr;
-      }
-
-      .hero {
-        display: none;
-      }
-
-      .sidebar {
-        min-height: auto;
-      }
-    }
-
-    @media (max-width: 720px) {
+      .auth { grid-template-columns: 1fr; }
+      .auth-hero { display: none; }
+      .chat { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .shell { min-height: 100vh; border-radius: 0; }
       .app { padding: 0; }
-      .shell {
-        width: 100%;
-        min-height: 100vh;
-        border-radius: 0;
-        border: none;
-      }
-      .chat-screen {
-        grid-template-columns: 1fr;
-      }
-      .sidebar {
-        display: none;
-      }
-      .msg { max-width: 88%; }
-      .auth { padding: 18px; }
-      .auth-card { padding: 22px; }
     }
   </style>
 </head>
 <body>
   <div class="app">
     <div class="shell">
-      <section class="login-screen" id="loginScreen">
-        <div class="hero">
-          <div class="badge">Güvenli oturum ve modern mesaj deneyimi</div>
-          <h1>WhatsApp tarzı, premium mesajlaşma arayüzü</h1>
+      <section class="auth" id="authScreen">
+        <div class="auth-hero">
+          <div class="badge">Firebase destekli gerçek giriş ve mesajlaşma</div>
+          <h1>Arkadaş ekleyip konuşabileceğin sistem</h1>
           <p>
-            Bu sürüm artık düzgün render olur. Kaynak kod gibi görünmez; doğrudan çalışan bir arayüzdür.
-            İçinde oturum açma, sohbet listesi, aktif konuşma penceresi, tema değişimi ve mesaj gönderme akışı var.
+            Bu sürüm Firebase Authentication ve Cloud Firestore için hazırlandı.
+            Kayıt olma, giriş yapma, kullanıcı arama, sohbet açma ve gerçek zamanlı mesajlaşma akışı tek dosyada kurulu.
           </p>
-          <div class="hero-grid">
-            <div class="hero-card"><strong>Realtime</strong><span>Canlı konuşma hissi veren akış</span></div>
-            <div class="hero-card"><strong>Secure</strong><span>Güven veren giriş alanı</span></div>
-            <div class="hero-card"><strong>Modern UX</strong><span>Temiz ve rahat kullanım</span></div>
+          <div class="hero-cards">
+            <div class="hero-card"><strong>Auth</strong><span>Email/şifre ile hesap açma ve giriş</span></div>
+            <div class="hero-card"><strong>Friends</strong><span>Kullanıcı e-postası ile sohbet başlatma</span></div>
+            <div class="hero-card"><strong>Live Chat</strong><span>Firestore ile gerçek zamanlı mesajlar</span></div>
           </div>
         </div>
 
-        <div class="auth">
+        <div class="auth-panel">
           <div class="auth-card">
-            <div class="auth-top">
-              <div>
-                <h2>Hoş geldin</h2>
-                <p>Hesabına giriş yap ve konuşmalarına kaldığın yerden devam et.</p>
-              </div>
-              <button class="toggle-theme" id="themeBtn">Tema</button>
+            <h2>PixelRoom Chat</h2>
+            <p>Önce hesap aç ya da giriş yap. Sonra arkadaşının e-postasıyla sohbet başlat.</p>
+            <div class="tabs">
+              <button class="tab active" id="loginTab">Giriş Yap</button>
+              <button class="tab" id="registerTab">Kayıt Ol</button>
             </div>
-
             <div class="form">
-              <div class="field">
-                <label>Görünen ad</label>
-                <input id="nameInput" type="text" value="Barbaros" placeholder="Adını yaz" />
+              <div class="row">
+                <div class="field">
+                  <label>Görünen ad</label>
+                  <input id="displayName" type="text" placeholder="Barbaros" />
+                </div>
+                <div class="field">
+                  <label>Kullanıcı adı</label>
+                  <input id="username" type="text" placeholder="barbaros" />
+                </div>
               </div>
               <div class="field">
                 <label>E-posta</label>
-                <input id="emailInput" type="email" value="barbaros@example.com" placeholder="ornek@mail.com" />
+                <input id="email" type="email" placeholder="ornek@mail.com" />
               </div>
               <div class="field">
                 <label>Şifre</label>
-                <div class="password-wrap">
-                  <input id="passwordInput" type="password" value="12345678" placeholder="En az 8 karakter" />
-                  <button class="password-toggle" id="passwordToggle">Göster</button>
-                </div>
+                <input id="password" type="password" placeholder="En az 6 karakter" />
               </div>
               <div class="error" id="errorBox"></div>
-              <div class="note">Bu demo örnek amaçlıdır. Girdi denetimi tarayıcı içinde yapılır.</div>
-              <button class="primary-btn" id="loginBtn">Oturum aç</button>
+              <div class="info">Önce Firebase Console’da Authentication → Email/Password ve Firestore Database’i açman gerekiyor.</div>
+              <button class="primary" id="authBtn">Giriş Yap</button>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="chat-screen" id="chatScreen">
+      <section class="chat hidden" id="chatScreen">
         <aside class="sidebar">
           <div class="sidebar-top">
-            <div class="sidebar-user">
-              <div class="identity">
-                <div class="avatar" id="userAvatar">BA</div>
-                <div class="identity-text">
-                  <strong id="userName">Barbaros</strong>
-                  <span>Mesaj merkezine bağlı</span>
+            <div class="identity">
+              <div class="left-id">
+                <div class="avatar" id="myAvatar">BR</div>
+                <div class="meta">
+                  <strong id="myName">Kullanıcı</strong>
+                  <span id="myMail">mail@example.com</span>
                 </div>
               </div>
-              <div class="top-actions">
-                <button class="icon-btn" id="themeBtn2">◐</button>
-                <button class="icon-btn" id="logoutBtn">⎋</button>
+              <div class="actions">
+                <button class="icon" id="logoutBtn">⎋</button>
               </div>
             </div>
           </div>
-
-          <div class="search-wrap">
-            <input id="searchInput" type="text" placeholder="Sohbet ara" />
+          <div class="search">
+            <input id="friendEmail" type="text" placeholder="Arkadaş e-postası ile sohbet başlat" />
           </div>
-
+          <div style="padding:0 14px 14px;">
+            <button class="primary" id="startChatBtn" style="width:100%;">Sohbet Başlat</button>
+          </div>
           <div class="chat-list" id="chatList"></div>
         </aside>
 
-        <main class="chat-main">
+        <main class="main">
           <div class="chat-top">
-            <div class="chat-user">
-              <div class="identity">
-                <div class="avatar" id="activeBadge">AS</div>
-                <div class="identity-text">
-                  <strong id="activeName">Atlas Studio</strong>
-                  <span class="status"><i class="dot"></i><span id="activeStatus">şimdi aktif</span></span>
+            <div class="identity">
+              <div class="left-id">
+                <div class="avatar" id="activeAvatar">--</div>
+                <div class="meta">
+                  <strong id="activeName">Sohbet seç</strong>
+                  <span id="activeInfo">Henüz aktif sohbet yok</span>
                 </div>
-              </div>
-              <div class="top-actions">
-                <button class="icon-btn">📞</button>
-                <button class="icon-btn">🎥</button>
-                <button class="icon-btn">⋮</button>
               </div>
             </div>
           </div>
-
           <div class="messages" id="messages"></div>
-
           <div class="composer">
-            <button class="icon-btn">😊</button>
-            <button class="icon-btn">📎</button>
-            <input id="messageInput" type="text" placeholder="Mesaj yaz" />
-            <button class="send-btn" id="sendBtn">Gönder</button>
+            <button class="icon">😊</button>
+            <div class="grow"><input id="messageInput" type="text" placeholder="Mesaj yaz" /></div>
+            <button class="send" id="sendBtn">Gönder</button>
           </div>
-          <div class="hint">Bu demo yerel veri ile çalışır. Tasarım artık doğrudan çalışan HTML/CSS/JS sürümüdür.</div>
+          <div class="subbar">Bu sürüm Firebase’e bağlanır. Rules ayarlanmadan herkese açma.</div>
         </main>
       </section>
     </div>
   </div>
 
-  <script>
-    const loginScreen = document.getElementById('loginScreen');
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      getDoc,
+      getDocs,
+      addDoc,
+      updateDoc,
+      collection,
+      query,
+      where,
+      orderBy,
+      serverTimestamp,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyABqkhpL1SMRzRJ9GQLjjZE2IryqpAvMPw",
+      authDomain: "pixelroom-ae218.firebaseapp.com",
+      databaseURL: "https://pixelroom-ae218-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "pixelroom-ae218",
+      storageBucket: "pixelroom-ae218.firebasestorage.app",
+      messagingSenderId: "720297722320",
+      appId: "1:720297722320:web:c815edae99d1efa7ff39d5",
+      measurementId: "G-HD8901B19M"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const authScreen = document.getElementById('authScreen');
     const chatScreen = document.getElementById('chatScreen');
-    const loginBtn = document.getElementById('loginBtn');
+    const loginTab = document.getElementById('loginTab');
+    const registerTab = document.getElementById('registerTab');
+    const authBtn = document.getElementById('authBtn');
     const logoutBtn = document.getElementById('logoutBtn');
-    const themeBtn = document.getElementById('themeBtn');
-    const themeBtn2 = document.getElementById('themeBtn2');
-    const passwordToggle = document.getElementById('passwordToggle');
-    const passwordInput = document.getElementById('passwordInput');
+    const displayNameInput = document.getElementById('displayName');
+    const usernameInput = document.getElementById('username');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
     const errorBox = document.getElementById('errorBox');
-    const nameInput = document.getElementById('nameInput');
-    const emailInput = document.getElementById('emailInput');
-    const userName = document.getElementById('userName');
-    const userAvatar = document.getElementById('userAvatar');
+    const myAvatar = document.getElementById('myAvatar');
+    const myName = document.getElementById('myName');
+    const myMail = document.getElementById('myMail');
+    const friendEmail = document.getElementById('friendEmail');
+    const startChatBtn = document.getElementById('startChatBtn');
     const chatList = document.getElementById('chatList');
-    const messages = document.getElementById('messages');
+    const activeAvatar = document.getElementById('activeAvatar');
     const activeName = document.getElementById('activeName');
-    const activeStatus = document.getElementById('activeStatus');
-    const activeBadge = document.getElementById('activeBadge');
-    const searchInput = document.getElementById('searchInput');
+    const activeInfo = document.getElementById('activeInfo');
+    const messages = document.getElementById('messages');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
 
-    let chats = [
-      {
-        id: 1,
-        name: 'Atlas Studio',
-        role: 'Product Team',
-        status: 'şimdi aktif',
-        badge: 'AS',
-        color: 'c1',
-        messages: [
-          { from: 'them', text: 'Selam, yeni arayüz prototipini inceledik. Görsel dil çok temiz duruyor.', time: '09:12', status: 'read' },
-          { from: 'me', text: 'Süper. İsterseniz akşamüstü mesaj akışını ve giriş ekranını da premium seviyeye çekebilirim.', time: '09:14', status: 'read' },
-          { from: 'them', text: 'Tam olarak onu istiyoruz. WhatsApp hissi olsun ama daha modern ve daha gösterişli dursun.', time: '09:16', status: 'read' },
-          { from: 'them', text: 'Bir de oturum açma ekranı güven verir gibi görünmeli.', time: '09:18', status: 'delivered' }
-        ]
-      },
-      {
-        id: 2,
-        name: 'Nova Core',
-        role: 'Design Lead',
-        status: 'bugün 10:41',
-        badge: 'NC',
-        color: 'c2',
-        messages: [
-          { from: 'them', text: 'Mesaj balonlarında yumuşak gölge kullanımı baya iyi durmuş.', time: '08:50', status: 'read' },
-          { from: 'me', text: 'Liste tarafına arama, rozet ve okunmamış sayaç ekledim.', time: '08:54', status: 'read' }
-        ]
-      },
-      {
-        id: 3,
-        name: 'Pixel Forge',
-        role: 'Frontend',
-        status: 'şimdi aktif',
-        badge: 'PF',
-        color: 'c3',
-        messages: [
-          { from: 'them', text: 'Giriş ekranında doğrulama alanları çok basit kalmasın, biraz premium copy yazalım.', time: '07:40', status: 'read' },
-          { from: 'me', text: 'Tamamdır. Güven, hız ve modern iletişim hissini öne çıkaran metinler kullanırım.', time: '07:42', status: 'read' }
-        ]
-      },
-      {
-        id: 4,
-        name: 'Mira',
-        role: 'Community',
-        status: 'dün 22:19',
-        badge: 'MI',
-        color: 'c4',
-        messages: [
-          { from: 'them', text: 'Bu tasarım telefonda da iyi görünürse baya güçlü olur.', time: 'Dün', status: 'read' }
-        ]
-      }
-    ];
-
-    let activeChatId = 1;
-
-    function setTheme() {
-      const saved = localStorage.getItem('nexa-theme');
-      if (saved === 'light') document.body.classList.add('light');
-      else document.body.classList.remove('light');
-    }
-
-    function toggleTheme() {
-      const isLight = document.body.classList.toggle('light');
-      localStorage.setItem('nexa-theme', isLight ? 'light' : 'dark');
-    }
-
-    function getTimeNow() {
-      return new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-    }
-
-    function renderChatList(filter = '') {
-      const q = filter.trim().toLowerCase();
-      chatList.innerHTML = '';
-
-      chats
-        .filter(chat => !q || chat.name.toLowerCase().includes(q) || chat.role.toLowerCase().includes(q) || chat.messages.some(m => m.text.toLowerCase().includes(q)))
-        .forEach(chat => {
-          const last = chat.messages[chat.messages.length - 1];
-          const btn = document.createElement('button');
-          btn.className = 'chat-item' + (chat.id === activeChatId ? ' active' : '');
-          btn.innerHTML = `
-            <div class="chat-item-row">
-              <div class="chat-badge ${chat.color}">${chat.badge}</div>
-              <div class="chat-main-text">
-                <strong>${chat.name}</strong>
-                <small>${chat.role}</small>
-                <p>${last ? last.text : ''}</p>
-              </div>
-              <small style="color:var(--muted)">${last ? last.time : ''}</small>
-            </div>
-          `;
-          btn.onclick = () => {
-            activeChatId = chat.id;
-            renderAll();
-          };
-          chatList.appendChild(btn);
-        });
-    }
-
-    function renderMessages() {
-      const chat = chats.find(c => c.id === activeChatId);
-      if (!chat) return;
-
-      activeName.textContent = chat.name;
-      activeStatus.textContent = chat.status;
-      activeBadge.textContent = chat.badge;
-
-      messages.innerHTML = '';
-      chat.messages.forEach(msg => {
-        const el = document.createElement('div');
-        el.className = `msg ${msg.from}`;
-        const statusText = msg.from === 'me' ? (msg.status === 'read' ? '✓✓' : msg.status === 'delivered' ? '✓✓' : '✓') : '';
-        el.innerHTML = `
-          <div>${msg.text}</div>
-          <div class="meta">
-            <span>${msg.time}</span>
-            ${msg.from === 'me' ? `<span>${statusText}</span>` : ''}
-          </div>
-        `;
-        messages.appendChild(el);
-      });
-      messages.scrollTop = messages.scrollHeight;
-    }
-
-    function renderAll() {
-      renderChatList(searchInput.value);
-      renderMessages();
-    }
+    let mode = 'login';
+    let currentUser = null;
+    let activeChatId = null;
+    let chatsUnsub = null;
+    let messagesUnsub = null;
 
     function showError(text) {
       errorBox.textContent = text;
@@ -823,54 +523,236 @@
       errorBox.classList.remove('show');
     }
 
-    loginBtn.onclick = () => {
-      const name = nameInput.value.trim();
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
+    function setMode(nextMode) {
+      mode = nextMode;
+      loginTab.classList.toggle('active', nextMode === 'login');
+      registerTab.classList.toggle('active', nextMode === 'register');
+      authBtn.textContent = nextMode === 'login' ? 'Giriş Yap' : 'Kayıt Ol';
+    }
 
-      if (!name) return showError('İsim alanı boş kalamaz.');
-      if (!email.includes('@') || email.length < 6) return showError('Geçerli bir e-posta gir.');
-      if (password.length < 8) return showError('Şifre en az 8 karakter olmalı.');
+    loginTab.onclick = () => setMode('login');
+    registerTab.onclick = () => setMode('register');
+
+    async function saveUserProfile(user, displayName, username) {
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        displayName,
+        username: username.toLowerCase(),
+        email: user.email,
+        createdAt: serverTimestamp()
+      }, { merge: true });
+    }
+
+    authBtn.onclick = async () => {
+      hideError();
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+      const displayName = displayNameInput.value.trim();
+      const username = usernameInput.value.trim();
+
+      try {
+        if (!email.includes('@')) throw new Error('Geçerli bir e-posta gir.');
+        if (password.length < 6) throw new Error('Şifre en az 6 karakter olmalı.');
+
+        if (mode === 'register') {
+          if (!displayName) throw new Error('Görünen ad boş olamaz.');
+          if (!username) throw new Error('Kullanıcı adı boş olamaz.');
+          const result = await createUserWithEmailAndPassword(auth, email, password);
+          await saveUserProfile(result.user, displayName, username);
+        } else {
+          await signInWithEmailAndPassword(auth, email, password);
+        }
+      } catch (err) {
+        showError(err.message || 'Bir hata oluştu.');
+      }
+    };
+
+    logoutBtn.onclick = async () => {
+      await signOut(auth);
+    };
+
+    async function getProfile(uid) {
+      const snap = await getDoc(doc(db, 'users', uid));
+      return snap.exists() ? snap.data() : null;
+    }
+
+    function chatIdFor(uid1, uid2) {
+      return [uid1, uid2].sort().join('_');
+    }
+
+    async function startChatWithEmail() {
+      if (!currentUser) return;
+      const targetEmail = friendEmail.value.trim().toLowerCase();
+      if (!targetEmail || !targetEmail.includes('@')) return showError('Arkadaş e-postasını düzgün gir.');
+      if (targetEmail === currentUser.email.toLowerCase()) return showError('Kendinle sohbet açamazsın.');
 
       hideError();
-      userName.textContent = name;
-      userAvatar.textContent = name.slice(0, 2).toUpperCase();
-      loginScreen.style.display = 'none';
-      chatScreen.style.display = 'grid';
-      renderAll();
-    };
+      const q = query(collection(db, 'users'), where('email', '==', targetEmail));
+      const res = await getDocs(q);
+      if (res.empty) return showError('Bu e-postaya ait kullanıcı bulunamadı.');
 
-    logoutBtn.onclick = () => {
-      chatScreen.style.display = 'none';
-      loginScreen.style.display = 'grid';
-    };
+      const target = res.docs[0].data();
+      const chatId = chatIdFor(currentUser.uid, target.uid);
+      await setDoc(doc(db, 'chats', chatId), {
+        members: [currentUser.uid, target.uid].sort(),
+        memberEmails: [currentUser.email.toLowerCase(), target.email.toLowerCase()].sort(),
+        memberNames: {
+          [currentUser.uid]: currentUser.profile.displayName,
+          [target.uid]: target.displayName
+        },
+        updatedAt: serverTimestamp(),
+        lastMessage: ''
+      }, { merge: true });
 
-    passwordToggle.onclick = () => {
-      const isPassword = passwordInput.type === 'password';
-      passwordInput.type = isPassword ? 'text' : 'password';
-      passwordToggle.textContent = isPassword ? 'Gizle' : 'Göster';
-    };
+      activeChatId = chatId;
+      openMessages(chatId);
+      friendEmail.value = '';
+    }
 
-    themeBtn.onclick = toggleTheme;
-    themeBtn2.onclick = toggleTheme;
+    startChatBtn.onclick = startChatWithEmail;
 
-    searchInput.oninput = () => renderChatList(searchInput.value);
+    function renderChatList(items) {
+      chatList.innerHTML = '';
+      if (!items.length) {
+        chatList.innerHTML = '<div style="padding:14px;color:var(--muted);font-size:14px;line-height:1.7;">Henüz sohbet yok. Arkadaşının e-postasını yazıp sohbet başlat.</div>';
+        return;
+      }
+
+      items.forEach(item => {
+        const otherUid = item.members.find(uid => uid !== currentUser.uid);
+        const otherName = item.memberNames?.[otherUid] || 'Kullanıcı';
+        const btn = document.createElement('button');
+        btn.className = 'chat-item' + (item.id === activeChatId ? ' active' : '');
+        btn.innerHTML = `
+          <div class="chat-row">
+            <div class="small-avatar">${otherName.slice(0,2).toUpperCase()}</div>
+            <div class="chat-text">
+              <strong>${otherName}</strong>
+              <small>Özel sohbet</small>
+              <p>${item.lastMessage || 'Henüz mesaj yok'}</p>
+            </div>
+          </div>
+        `;
+        btn.onclick = () => {
+          activeChatId = item.id;
+          openMessages(item.id);
+          renderSidebarLive();
+        };
+        chatList.appendChild(btn);
+      });
+    }
+
+    let cachedChats = [];
+    function renderSidebarLive() {
+      renderChatList(cachedChats);
+    }
+
+    function watchChats() {
+      if (chatsUnsub) chatsUnsub();
+      const q = query(collection(db, 'chats'), where('members', 'array-contains', currentUser.uid));
+      chatsUnsub = onSnapshot(q, (snap) => {
+        const items = snap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => {
+            const at = a.updatedAt?.seconds || 0;
+            const bt = b.updatedAt?.seconds || 0;
+            return bt - at;
+          });
+        cachedChats = items;
+        if (!activeChatId && items.length) activeChatId = items[0].id;
+        renderSidebarLive();
+        if (activeChatId) openMessages(activeChatId);
+      });
+    }
+
+    async function openMessages(chatId) {
+      if (!chatId || !currentUser) return;
+      const chatSnap = await getDoc(doc(db, 'chats', chatId));
+      if (!chatSnap.exists()) return;
+      const chat = { id: chatSnap.id, ...chatSnap.data() };
+      const otherUid = chat.members.find(uid => uid !== currentUser.uid);
+      const otherName = chat.memberNames?.[otherUid] || 'Kullanıcı';
+      activeName.textContent = otherName;
+      activeAvatar.textContent = otherName.slice(0,2).toUpperCase();
+      activeInfo.textContent = 'Özel sohbet';
+
+      if (messagesUnsub) messagesUnsub();
+      const mq = query(collection(db, 'chats', chatId, 'messages'), orderBy('createdAt', 'asc'));
+      messagesUnsub = onSnapshot(mq, (snap) => {
+        messages.innerHTML = '';
+        snap.docs.forEach(d => {
+          const msg = d.data();
+          const div = document.createElement('div');
+          div.className = 'msg ' + (msg.uid === currentUser.uid ? 'me' : 'them');
+          const time = msg.createdAt?.toDate
+            ? msg.createdAt.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+            : '--:--';
+          div.innerHTML = `
+            <div>${msg.text}</div>
+            <div class="msg-meta">
+              <span>${time}</span>
+              ${msg.uid === currentUser.uid ? '<span>✓</span>' : ''}
+            </div>
+          `;
+          messages.appendChild(div);
+        });
+        messages.scrollTop = messages.scrollHeight;
+      });
+    }
+
+    async function sendMessage() {
+      if (!activeChatId || !currentUser) return showError('Önce bir sohbet seç.');
+      const text = messageInput.value.trim();
+      if (!text) return;
+
+      await addDoc(collection(db, 'chats', activeChatId, 'messages'), {
+        text,
+        uid: currentUser.uid,
+        senderName: currentUser.profile.displayName,
+        createdAt: serverTimestamp()
+      });
+
+      await updateDoc(doc(db, 'chats', activeChatId), {
+        lastMessage: text,
+        updatedAt: serverTimestamp()
+      });
+
+      messageInput.value = '';
+    }
 
     sendBtn.onclick = sendMessage;
-    messageInput.addEventListener('keydown', e => {
+    messageInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') sendMessage();
     });
 
-    function sendMessage() {
-      const text = messageInput.value.trim();
-      if (!text) return;
-      const chat = chats.find(c => c.id === activeChatId);
-      chat.messages.push({ from: 'me', text, time: getTimeNow(), status: 'sent' });
-      messageInput.value = '';
-      renderMessages();
-    }
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        currentUser = null;
+        authScreen.classList.remove('hidden');
+        chatScreen.classList.add('hidden');
+        if (chatsUnsub) chatsUnsub();
+        if (messagesUnsub) messagesUnsub();
+        return;
+      }
 
-    setTheme();
+      const profile = await getProfile(user.uid);
+      currentUser = {
+        ...user,
+        profile: profile || {
+          displayName: user.email.split('@')[0],
+          username: user.email.split('@')[0],
+          email: user.email
+        }
+      };
+
+      myName.textContent = currentUser.profile.displayName;
+      myMail.textContent = user.email;
+      myAvatar.textContent = currentUser.profile.displayName.slice(0,2).toUpperCase();
+
+      authScreen.classList.add('hidden');
+      chatScreen.classList.remove('hidden');
+      watchChats();
+    });
   </script>
 </body>
 </html>
