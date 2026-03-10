@@ -1,115 +1,529 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>Web Chat App</title>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PixelRoom Chat</title>
   <style>
-    body { font-family: Arial; background: #f5f5f5; margin: 0; padding:0;}
-    #chat { max-width: 600px; margin: auto; padding: 20px; }
-    .message { padding: 10px; margin:5px 0; border-radius:10px; display: inline-block; }
-    .me { background: #DCF8C6; float:right; clear:both;}
-    .other { background: #FFF; float:left; clear:both;}
-    #messages { min-height: 400px; border:1px solid #ccc; padding:10px; overflow-y: scroll; background:#fff;}
-    #inputArea { margin-top:10px; display:flex; }
-    #inputArea input { flex:1; padding:10px; border-radius:5px; border:1px solid #ccc; }
-    #inputArea button { padding:10px 15px; margin-left:5px; border:none; background:green; color:white; border-radius:5px; }
+    :root{
+      --bg:#0b141a;
+      --panel:#111b21;
+      --panel-2:#202c33;
+      --line:#2a3942;
+      --soft:#8696a0;
+      --text:#e9edef;
+      --accent:#00a884;
+      --accent-2:#005c4b;
+      --bubble-me:#005c4b;
+      --bubble-other:#202c33;
+      --danger:#ff5f5f;
+      --shadow:0 12px 34px rgba(0,0,0,.35);
+      --radius:16px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    body{overflow:hidden}
+    button,input,textarea{font:inherit}
+
+    .app{height:100vh;display:grid;grid-template-columns:360px 1fr}
+    .sidebar{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+    .chat-area{display:flex;flex-direction:column;min-width:0;background:linear-gradient(180deg,#0b141a,#111b21)}
+
+    .top{padding:14px 16px;background:var(--panel-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+    .avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#00a884,#1f8fff);font-weight:800;color:#fff;flex-shrink:0}
+    .meta{min-width:0}
+    .meta h2,.meta h3{margin:0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .meta p{margin:3px 0 0;color:var(--soft);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .spacer{flex:1}
+
+    .icon-btn,.send-btn,.primary,.secondary,.danger{border:none;cursor:pointer}
+    .icon-btn{background:transparent;color:var(--soft);font-size:18px;padding:8px;border-radius:10px}
+    .icon-btn:hover{background:rgba(255,255,255,.05)}
+
+    .card{padding:14px 14px 10px;border-bottom:1px solid var(--line)}
+    .label{font-size:12px;color:var(--soft);margin:0 0 8px;text-transform:uppercase;letter-spacing:.08em}
+    .input{width:100%;background:#1f2c34;border:1px solid transparent;color:var(--text);padding:13px 14px;border-radius:12px;outline:none;margin-bottom:10px}
+    .input:focus,.composer textarea:focus{border-color:#00a884}
+    .row{display:flex;gap:8px}
+    .primary{background:var(--accent);color:#fff;border-radius:12px;padding:12px 14px;font-weight:700;box-shadow:var(--shadow)}
+    .secondary{background:#1f2c34;color:var(--text);border-radius:12px;padding:12px 14px}
+    .danger{background:rgba(255,95,95,.12);color:#ff9f9f;border:1px solid rgba(255,95,95,.22);border-radius:12px;padding:12px 14px}
+    .primary:disabled,.secondary:disabled,.danger:disabled,.send-btn:disabled{opacity:.55;cursor:not-allowed}
+
+    .search-wrap{padding:10px;border-bottom:1px solid var(--line)}
+    .search{width:100%;background:#202c33;border:none;color:var(--text);padding:12px 14px;border-radius:10px;outline:none}
+
+    .chat-list{flex:1;overflow:auto}
+    .chat-item{display:flex;gap:12px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:.15s}
+    .chat-item:hover,.chat-item.active{background:#1f2c34}
+    .chat-item .text{min-width:0;flex:1}
+    .chat-item .text h4{margin:0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .chat-item .text p{margin:4px 0 0;font-size:13px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .chat-item .time{font-size:11px;color:var(--soft);white-space:nowrap}
+
+    .welcome{margin:auto;max-width:560px;text-align:center;padding:28px;color:var(--soft)}
+    .welcome h1{color:var(--text);margin-top:0}
+
+    .messages{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:10px;background-image:radial-gradient(rgba(255,255,255,.02) 1px, transparent 1px);background-size:20px 20px}
+    .msg-wrap{display:flex;flex-direction:column;max-width:75%}
+    .msg-wrap.me{align-self:flex-end;align-items:flex-end}
+    .msg-wrap.other{align-self:flex-start;align-items:flex-start}
+    .msg{padding:10px 12px 8px;border-radius:14px;box-shadow:var(--shadow);line-height:1.45;word-break:break-word}
+    .msg.me{background:var(--bubble-me);border-bottom-right-radius:4px}
+    .msg.other{background:var(--bubble-other);border:1px solid rgba(255,255,255,.05);border-bottom-left-radius:4px}
+    .msg-name{font-size:12px;color:#88d7c4;margin:0 0 5px;font-weight:700}
+    .msg-meta{font-size:11px;color:#b7c4cb;margin-top:6px;text-align:right}
+
+    .typing{min-height:18px;padding:8px 18px 0;color:var(--soft);font-size:12px}
+    .composer{padding:10px 14px 14px;background:var(--panel-2);border-top:1px solid var(--line);display:flex;gap:10px;align-items:flex-end}
+    .composer textarea{flex:1;min-height:52px;max-height:140px;resize:none;background:#2a3942;color:var(--text);border:1px solid transparent;border-radius:14px;padding:14px;outline:none}
+    .send-btn{width:52px;height:52px;border-radius:14px;background:var(--accent);color:#fff;font-size:20px;font-weight:800;box-shadow:var(--shadow)}
+
+    .badge{padding:5px 10px;border-radius:999px;background:rgba(0,168,132,.12);color:#81e6d0;font-size:12px;border:1px solid rgba(0,168,132,.2)}
+    .hidden{display:none !important}
+
+    @media (max-width:900px){
+      .app{grid-template-columns:1fr}
+      .sidebar.mobile-hidden{display:none}
+      .chat-area.mobile-hidden{display:none}
+    }
   </style>
 </head>
 <body>
+  <div class="app">
+    <aside id="sidebar" class="sidebar">
+      <div class="top">
+        <div id="meAvatar" class="avatar">?</div>
+        <div class="meta">
+          <h2 id="meName">PixelRoom</h2>
+          <p id="meSub">Bağlanıyor...</p>
+        </div>
+        <div class="spacer"></div>
+        <button id="logoutBtn" class="icon-btn" title="Çık">⎋</button>
+      </div>
 
-<div id="chat">
-  <h2>Web Chat App</h2>
-  <div id="messages"></div>
-  <div id="inputArea">
-    <input type="text" id="messageInput" placeholder="Mesaj yaz..." />
-    <button onclick="sendMessage()">Gönder</button>
-    <input type="file" id="fileInput" />
+      <div class="card">
+        <p class="label">Profil</p>
+        <input id="nameInput" class="input" maxlength="20" placeholder="Görünen adın" />
+        <input id="usernameInput" class="input" maxlength="20" placeholder="Kullanıcı adın (örn barbaros)" />
+        <button id="saveProfileBtn" class="primary" style="width:100%">Profili Kaydet</button>
+      </div>
+
+      <div class="card">
+        <p class="label">Yeni Sohbet</p>
+        <input id="newChatInput" class="input" maxlength="20" placeholder="Arkadaş kullanıcı adı" />
+        <div class="row">
+          <button id="newChatBtn" class="primary" style="flex:1">Sohbet Aç</button>
+          <button id="refreshChatsBtn" class="secondary">Yenile</button>
+        </div>
+      </div>
+
+      <div class="search-wrap">
+        <input id="chatSearch" class="search" placeholder="Sohbetlerde ara" />
+      </div>
+
+      <div id="chatList" class="chat-list"></div>
+    </aside>
+
+    <main id="chatArea" class="chat-area">
+      <div id="emptyChat" class="welcome">
+        <h1>PixelRoom Chat</h1>
+        <p>Bu tek dosyalık sürüm Firebase Realtime Database ile çalışan WhatsApp tarzı birebir sohbet sistemidir.</p>
+        <p>Önce profilini kaydet. Sonra arkadaşının kullanıcı adını yazıp sohbet aç. Arkadaşın da aynı sistemi kullanmalı.</p>
+      </div>
+
+      <div id="activeChatWrap" class="hidden" style="display:flex;flex-direction:column;height:100%">
+        <div class="top">
+          <button id="backBtn" class="icon-btn hidden">←</button>
+          <div id="chatAvatar" class="avatar">?</div>
+          <div class="meta">
+            <h3 id="chatName">Sohbet</h3>
+            <p id="chatSub">Bağlanıyor...</p>
+          </div>
+          <div class="spacer"></div>
+          <span id="presenceBadge" class="badge">offline</span>
+        </div>
+
+        <div id="typingText" class="typing"></div>
+        <div id="messages" class="messages"></div>
+
+        <div class="composer">
+          <textarea id="messageInput" placeholder="Mesaj yaz"></textarea>
+          <button id="sendBtn" class="send-btn">➤</button>
+        </div>
+      </div>
+    </main>
   </div>
-</div>
 
-<script>
-  // Firebase config
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  const storage = firebase.storage();
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import {
+      getDatabase, ref, set, get, update, push, onValue, off, remove,
+      query, orderByChild, limitToLast, onDisconnect
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
-  const userId = prompt("Kullanıcı adını girin:");
+    const firebaseConfig = {
+      apiKey: "AIzaSyABqkhpL1SMRzRJ9GQLjjZE2IryqpAvMPw",
+      authDomain: "pixelroom-ae218.firebaseapp.com",
+      databaseURL: "https://pixelroom-ae218-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "pixelroom-ae218",
+      storageBucket: "pixelroom-ae218.firebasestorage.app",
+      messagingSenderId: "720297722320",
+      appId: "1:720297722320:web:c815edae99d1efa7ff39d5",
+      measurementId: "G-HD8901B19M"
+    };
 
-  // Online durumu
-  const userRef = db.collection("users").doc(userId);
-  userRef.set({online:true});
-  window.addEventListener("beforeunload", () => {
-    userRef.update({online:false});
-  });
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
 
-  // Mesaj gönderme
-  async function sendMessage() {
-    const input = document.getElementById("messageInput");
-    if(input.value.trim() === "") return;
-    await db.collection("messages").add({
-      text: input.value,
-      sender: userId,
-      time: firebase.firestore.FieldValue.serverTimestamp(),
-      seen: false,
-      type: "text"
-    });
-    input.value = "";
-  }
+    const $ = id => document.getElementById(id);
+    const els = {
+      sidebar: $("sidebar"), chatArea: $("chatArea"),
+      meAvatar: $("meAvatar"), meName: $("meName"), meSub: $("meSub"), logoutBtn: $("logoutBtn"),
+      nameInput: $("nameInput"), usernameInput: $("usernameInput"), saveProfileBtn: $("saveProfileBtn"),
+      newChatInput: $("newChatInput"), newChatBtn: $("newChatBtn"), refreshChatsBtn: $("refreshChatsBtn"),
+      chatSearch: $("chatSearch"), chatList: $("chatList"),
+      emptyChat: $("emptyChat"), activeChatWrap: $("activeChatWrap"),
+      backBtn: $("backBtn"), chatAvatar: $("chatAvatar"), chatName: $("chatName"), chatSub: $("chatSub"), presenceBadge: $("presenceBadge"),
+      typingText: $("typingText"), messages: $("messages"), messageInput: $("messageInput"), sendBtn: $("sendBtn")
+    };
 
-  // Dosya gönderme
-  const fileInput = document.getElementById("fileInput");
-  fileInput.addEventListener("change", async (e)=>{
-    const file = e.target.files[0];
-    if(!file) return;
-    const ref = storage.ref('files/'+Date.now()+"_"+file.name);
-    await ref.put(file);
-    const url = await ref.getDownloadURL();
-    const type = file.type.startsWith("image") ? "image" : "video";
-    await db.collection("messages").add({
-      fileUrl: url,
-      sender: userId,
-      time: firebase.firestore.FieldValue.serverTimestamp(),
-      type: type,
-      seen: false
-    });
-    fileInput.value = "";
-  });
+    let me = null;
+    let myProfile = null;
+    let activeChatId = null;
+    let activePeer = null;
+    let chatsCache = [];
+    let typingTimer = null;
+    let currentMessagesRef = null;
+    let currentTypingRef = null;
+    let currentPresenceRef = null;
+    let currentChatMetaRef = null;
 
-  // Mesajları gösterme ve okundu işareti
-  db.collection("messages").orderBy("time")
-    .onSnapshot(snapshot=>{
-      const messagesDiv = document.getElementById("messages");
-      messagesDiv.innerHTML = "";
-      snapshot.forEach(doc=>{
-        const m = doc.data();
-        const div = document.createElement("div");
-        div.className = "message " + (m.sender === userId ? "me" : "other");
-        if(m.type === "text") div.textContent = m.text;
-        if(m.type === "image") div.innerHTML = `<img src="${m.fileUrl}" width="200"/>`;
-        if(m.type === "video") div.innerHTML = `<video width="200" controls><source src="${m.fileUrl}"></video>`;
-        // okundu işareti
-        if(m.sender === userId) div.innerHTML += m.seen ? " ✔✔" : " ✔";
-        messagesDiv.appendChild(div);
+    function esc(str=""){
+      return str.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"', '&quot;').replaceAll("'", "&#039;");
+    }
+    function initials(name="?"){
+      return name.trim().slice(0,2).toUpperCase() || "?";
+    }
+    function roomId(a,b){
+      return [a.toLowerCase(), b.toLowerCase()].sort().join("__");
+    }
+    function formatTime(ts){
+      if(!ts) return "";
+      const d = new Date(ts);
+      const hh = String(d.getHours()).padStart(2,"0");
+      const mm = String(d.getMinutes()).padStart(2,"0");
+      return `${hh}:${mm}`;
+    }
+    function formatListTime(ts){
+      if(!ts) return "";
+      const d = new Date(ts);
+      return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+    }
+    function autoGrow(){
+      els.messageInput.style.height = "52px";
+      els.messageInput.style.height = Math.min(140, els.messageInput.scrollHeight) + "px";
+    }
+    function mobileMode(){
+      return window.innerWidth <= 900;
+    }
+    function showChatMobile(){
+      if(mobileMode()){
+        els.sidebar.classList.add("mobile-hidden");
+        els.chatArea.classList.remove("mobile-hidden");
+        els.backBtn.classList.remove("hidden");
+      }
+    }
+    function showSidebarMobile(){
+      if(mobileMode()){
+        els.chatArea.classList.remove("mobile-hidden");
+        els.sidebar.classList.remove("mobile-hidden");
+        els.backBtn.classList.add("hidden");
+      }
+    }
+    function updateHeader(){
+      els.meAvatar.textContent = initials(myProfile?.name || "?");
+      els.meName.textContent = myProfile?.name || "PixelRoom";
+      els.meSub.textContent = myProfile?.username ? `@${myProfile.username}` : "Profilini ayarla";
+      els.nameInput.value = myProfile?.name || "";
+      els.usernameInput.value = myProfile?.username || "";
+    }
 
-        // Eğer ben alıcıysam seen=true yap
-        if(m.sender !== userId && !m.seen) {
-          doc.ref.update({seen:true});
-        }
+    async function ensureAuth(){
+      await signInAnonymously(auth);
+      return new Promise(resolve => {
+        onAuthStateChanged(auth, user => {
+          if(user){ me = user; resolve(user); }
+        });
       });
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
-</script>
+    }
 
+    async function loadMyProfile(){
+      const localName = localStorage.getItem("pixelroom_name") || "";
+      const localUsername = localStorage.getItem("pixelroom_username") || "";
+      const snap = await get(ref(db, `profiles/${me.uid}`));
+      myProfile = snap.exists() ? snap.val() : { uid: me.uid, name: localName, username: localUsername };
+      updateHeader();
+    }
+
+    async function savePresence(){
+      const pRef = ref(db, `presence/${me.uid}`);
+      await set(pRef, { uid: me.uid, online: true, username: myProfile?.username || "", name: myProfile?.name || "", at: Date.now() });
+      onDisconnect(pRef).remove();
+    }
+
+    async function saveProfile(){
+      const name = els.nameInput.value.trim().replace(/\s+/g, " ");
+      const username = els.usernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_.]/g, "");
+
+      if(name.length < 2) return alert("Ad en az 2 karakter olsun.");
+      if(username.length < 3) return alert("Kullanıcı adı en az 3 karakter olsun.");
+
+      const usernameSnap = await get(ref(db, `usernames/${username}`));
+      if(usernameSnap.exists() && usernameSnap.val() !== me.uid){
+        return alert("Bu kullanıcı adı dolu.");
+      }
+
+      const oldUsername = myProfile?.username;
+      if(oldUsername && oldUsername !== username){
+        await remove(ref(db, `usernames/${oldUsername}`));
+      }
+
+      myProfile = { uid: me.uid, name, username, updatedAt: Date.now() };
+      await set(ref(db, `profiles/${me.uid}`), myProfile);
+      await set(ref(db, `usernames/${username}`), me.uid);
+      localStorage.setItem("pixelroom_name", name);
+      localStorage.setItem("pixelroom_username", username);
+      updateHeader();
+      await savePresence();
+      await loadChats();
+      alert("Profil kaydedildi.");
+    }
+
+    async function createOrOpenChat(targetUsernameRaw){
+      if(!myProfile?.username) return alert("Önce profilini kaydet.");
+      const targetUsername = (targetUsernameRaw || els.newChatInput.value).trim().toLowerCase();
+      if(!targetUsername) return alert("Bir kullanıcı adı yaz.");
+      if(targetUsername === myProfile.username) return alert("Kendinle sohbet açamazsın.");
+
+      const uidSnap = await get(ref(db, `usernames/${targetUsername}`));
+      if(!uidSnap.exists()) return alert("Bu kullanıcı adı bulunamadı.");
+
+      const targetUid = uidSnap.val();
+      const targetProfileSnap = await get(ref(db, `profiles/${targetUid}`));
+      if(!targetProfileSnap.exists()) return alert("Profil bulunamadı.");
+      const targetProfile = targetProfileSnap.val();
+
+      const chatId = roomId(myProfile.username, targetUsername);
+      const metaRef = ref(db, `chats/${chatId}/meta`);
+      const metaSnap = await get(metaRef);
+      if(!metaSnap.exists()){
+        await set(metaRef, {
+          id: chatId,
+          members: {
+            [me.uid]: { uid: me.uid, username: myProfile.username, name: myProfile.name },
+            [targetUid]: { uid: targetUid, username: targetProfile.username, name: targetProfile.name }
+          },
+          usernames: [myProfile.username, targetProfile.username],
+          updatedAt: Date.now(),
+          lastMessage: "",
+          lastMessageAt: 0,
+          createdAt: Date.now()
+        });
+      }
+
+      await set(ref(db, `userChats/${me.uid}/${chatId}`), { chatId, peerUsername: targetProfile.username, peerName: targetProfile.name, updatedAt: Date.now() });
+      await set(ref(db, `userChats/${targetUid}/${chatId}`), { chatId, peerUsername: myProfile.username, peerName: myProfile.name, updatedAt: Date.now() });
+
+      els.newChatInput.value = "";
+      await loadChats();
+      openChat(chatId, targetProfile);
+    }
+
+    async function loadChats(){
+      if(!me) return;
+      const snap = await get(ref(db, `userChats/${me.uid}`));
+      const data = snap.val() || {};
+      const entries = await Promise.all(Object.values(data).map(async item => {
+        const metaSnap = await get(ref(db, `chats/${item.chatId}/meta`));
+        const meta = metaSnap.val() || {};
+        return {
+          chatId: item.chatId,
+          peerName: item.peerName,
+          peerUsername: item.peerUsername,
+          lastMessage: meta.lastMessage || "Sohbet başlatıldı",
+          lastMessageAt: meta.lastMessageAt || meta.updatedAt || 0
+        };
+      }));
+
+      chatsCache = entries.sort((a,b) => (b.lastMessageAt||0) - (a.lastMessageAt||0));
+      renderChatList();
+    }
+
+    function renderChatList(){
+      const q = els.chatSearch.value.trim().toLowerCase();
+      const list = chatsCache.filter(c => !q || c.peerName?.toLowerCase().includes(q) || c.peerUsername?.toLowerCase().includes(q) || c.lastMessage?.toLowerCase().includes(q));
+      els.chatList.innerHTML = list.map(c => `
+        <div class="chat-item ${activeChatId===c.chatId?"active":""}" data-chat="${c.chatId}" data-user="${c.peerUsername}">
+          <div class="avatar">${esc(initials(c.peerName || c.peerUsername))}</div>
+          <div class="text">
+            <h4>${esc(c.peerName || c.peerUsername)}</h4>
+            <p>@${esc(c.peerUsername || "")} · ${esc(c.lastMessage || "")}</p>
+          </div>
+          <div class="time">${formatListTime(c.lastMessageAt)}</div>
+        </div>
+      `).join("") || `<div class="welcome" style="padding:22px">Henüz sohbet yok.</div>`;
+
+      [...els.chatList.querySelectorAll('.chat-item')].forEach(item => {
+        item.onclick = async () => {
+          const peerUsername = item.dataset.user;
+          const uidSnap = await get(ref(db, `usernames/${peerUsername}`));
+          if(!uidSnap.exists()) return;
+          const profileSnap = await get(ref(db, `profiles/${uidSnap.val()}`));
+          if(!profileSnap.exists()) return;
+          openChat(item.dataset.chat, profileSnap.val());
+        };
+      });
+    }
+
+    function cleanupChatListeners(){
+      if(currentMessagesRef) off(currentMessagesRef);
+      if(currentTypingRef) off(currentTypingRef);
+      if(currentPresenceRef) off(currentPresenceRef);
+      if(currentChatMetaRef) off(currentChatMetaRef);
+      currentMessagesRef = null;
+      currentTypingRef = null;
+      currentPresenceRef = null;
+      currentChatMetaRef = null;
+    }
+
+    function openChat(chatId, peerProfile){
+      cleanupChatListeners();
+      activeChatId = chatId;
+      activePeer = peerProfile;
+      renderChatList();
+      els.emptyChat.classList.add("hidden");
+      els.activeChatWrap.classList.remove("hidden");
+      els.chatAvatar.textContent = initials(peerProfile.name || peerProfile.username);
+      els.chatName.textContent = peerProfile.name || peerProfile.username;
+      els.chatSub.textContent = `@${peerProfile.username}`;
+      els.presenceBadge.textContent = "offline";
+      els.typingText.textContent = "";
+      els.messages.innerHTML = "";
+      showChatMobile();
+
+      currentPresenceRef = ref(db, `presence/${peerProfile.uid}`);
+      onValue(currentPresenceRef, snap => {
+        const val = snap.val();
+        const online = !!val?.online;
+        els.presenceBadge.textContent = online ? "online" : "offline";
+        els.chatSub.textContent = online ? `@${peerProfile.username} · çevrimiçi` : `@${peerProfile.username}`;
+      });
+
+      currentTypingRef = ref(db, `chatTyping/${chatId}/${peerProfile.uid}`);
+      onValue(currentTypingRef, snap => {
+        els.typingText.textContent = snap.exists() ? `${peerProfile.name || peerProfile.username} yazıyor...` : "";
+      });
+
+      currentMessagesRef = query(ref(db, `messages/${chatId}`), orderByChild("createdAt"), limitToLast(200));
+      onValue(currentMessagesRef, snap => {
+        const data = snap.val() || {};
+        const arr = Object.values(data).sort((a,b) => (a.createdAt||0) - (b.createdAt||0));
+        els.messages.innerHTML = arr.map(m => {
+          const isMe = m.senderUid === me.uid;
+          return `
+            <div class="msg-wrap ${isMe ? "me" : "other"}">
+              <div class="msg ${isMe ? "me" : "other"}">
+                ${!isMe ? `<div class="msg-name">${esc(m.senderName || "")}</div>` : ""}
+                <div>${esc(m.text || "")}</div>
+                <div class="msg-meta">${formatTime(m.createdAt)}</div>
+              </div>
+            </div>
+          `;
+        }).join("") || `<div class="welcome" style="padding:28px">Henüz mesaj yok. İlk mesajı sen at.</div>`;
+        els.messages.scrollTop = els.messages.scrollHeight;
+      });
+
+      currentChatMetaRef = ref(db, `chats/${chatId}/meta`);
+      onValue(currentChatMetaRef, async () => {
+        await loadChats();
+      });
+    }
+
+    async function setTyping(){
+      if(!activeChatId || !me) return;
+      const tRef = ref(db, `chatTyping/${activeChatId}/${me.uid}`);
+      await set(tRef, { uid: me.uid, at: Date.now() });
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => remove(tRef), 1200);
+    }
+
+    async function sendMessage(){
+      const text = els.messageInput.value.trim();
+      if(!text || !activeChatId || !myProfile) return;
+      const msg = {
+        senderUid: me.uid,
+        senderName: myProfile.name,
+        senderUsername: myProfile.username,
+        text,
+        createdAt: Date.now()
+      };
+      await push(ref(db, `messages/${activeChatId}`), msg);
+      await update(ref(db, `chats/${activeChatId}/meta`), {
+        lastMessage: text,
+        lastMessageAt: msg.createdAt,
+        updatedAt: msg.createdAt
+      });
+      els.messageInput.value = "";
+      autoGrow();
+      await remove(ref(db, `chatTyping/${activeChatId}/${me.uid}`));
+      await loadChats();
+    }
+
+    async function logOut(){
+      try{ await remove(ref(db, `presence/${me.uid}`)); }catch(e){}
+      await signOut(auth);
+      location.reload();
+    }
+
+    els.saveProfileBtn.onclick = saveProfile;
+    els.newChatBtn.onclick = () => createOrOpenChat();
+    els.refreshChatsBtn.onclick = loadChats;
+    els.chatSearch.oninput = renderChatList;
+    els.sendBtn.onclick = sendMessage;
+    els.logoutBtn.onclick = logOut;
+    els.backBtn.onclick = showSidebarMobile;
+    els.messageInput.addEventListener("input", () => { autoGrow(); setTyping(); });
+    els.messageInput.addEventListener("keydown", e => {
+      if(e.key === "Enter" && !e.shiftKey){
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+    els.newChatInput.addEventListener("keydown", e => { if(e.key === "Enter") createOrOpenChat(); });
+    window.addEventListener("resize", () => {
+      if(!mobileMode()){
+        els.sidebar.classList.remove("mobile-hidden");
+        els.chatArea.classList.remove("mobile-hidden");
+        els.backBtn.classList.add("hidden");
+      }
+    });
+
+    (async function init(){
+      try{
+        await ensureAuth();
+        await loadMyProfile();
+        await savePresence();
+        await loadChats();
+        updateHeader();
+      }catch(err){
+        console.error(err);
+        alert("Firebase bağlantısı kurulamadı. Anonymous Auth veya Realtime Database kapalı olabilir.");
+      }
+    })();
+  </script>
 </body>
 </html>
