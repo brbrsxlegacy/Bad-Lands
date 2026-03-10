@@ -1,889 +1,115 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PixelRoom</title>
+  <meta charset="UTF-8">
+  <title>Web Chat App</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js"></script>
   <style>
-    :root{
-      --bg:#0b1020;
-      --bg2:#11182d;
-      --panel:rgba(19, 28, 52, 0.88);
-      --panel-2:rgba(255,255,255,0.05);
-      --text:#f5f7ff;
-      --muted:#97a2c6;
-      --line:rgba(255,255,255,0.08);
-      --accent:#6c7cff;
-      --accent-2:#4ce2b5;
-      --danger:#ff6b81;
-      --shadow:0 18px 60px rgba(0,0,0,0.35);
-      --radius:22px;
-    }
-
-    *{box-sizing:border-box}
-    html,body{
-      margin:0;
-      height:100%;
-      font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color:var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(108,124,255,0.20), transparent 30%),
-        radial-gradient(circle at bottom right, rgba(76,226,181,0.12), transparent 25%),
-        linear-gradient(135deg, #070b16 0%, #0b1020 45%, #0e1427 100%);
-      overflow:hidden;
-    }
-
-    .app{
-      display:grid;
-      grid-template-columns: 320px 1fr;
-      height:100vh;
-    }
-
-    .sidebar{
-      background:rgba(7,11,22,0.65);
-      border-right:1px solid var(--line);
-      backdrop-filter:blur(18px);
-      padding:20px;
-      display:flex;
-      flex-direction:column;
-      gap:16px;
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      padding:8px 4px 18px;
-      border-bottom:1px solid var(--line);
-    }
-
-    .logo{
-      width:48px;
-      height:48px;
-      border-radius:16px;
-      background:
-        linear-gradient(135deg,var(--accent),#8b5cf6 55%, var(--accent-2));
-      box-shadow:0 10px 30px rgba(108,124,255,0.35);
-      display:grid;
-      place-items:center;
-      font-size:22px;
-      font-weight:900;
-    }
-
-    .brand-text h1{
-      margin:0;
-      font-size:20px;
-      line-height:1.1;
-    }
-
-    .brand-text p{
-      margin:4px 0 0;
-      color:var(--muted);
-      font-size:13px;
-    }
-
-    .card{
-      background:var(--panel-2);
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      padding:16px;
-      box-shadow:var(--shadow);
-    }
-
-    .section-title{
-      margin:0 0 12px;
-      font-size:13px;
-      text-transform:uppercase;
-      letter-spacing:.12em;
-      color:var(--muted);
-    }
-
-    .input, .btn{
-      width:100%;
-      border:none;
-      outline:none;
-      border-radius:16px;
-      padding:14px 14px;
-      font-size:14px;
-    }
-
-    .input{
-      background:rgba(255,255,255,0.06);
-      color:var(--text);
-      border:1px solid transparent;
-      transition:.2s;
-      margin-bottom:10px;
-    }
-
-    .input:focus{
-      border-color:rgba(108,124,255,0.9);
-      box-shadow:0 0 0 4px rgba(108,124,255,0.15);
-    }
-
-    .btn{
-      cursor:pointer;
-      font-weight:700;
-      transition:transform .12s ease, opacity .2s ease, box-shadow .2s ease;
-    }
-
-    .btn:active{ transform:scale(.985); }
-
-    .btn-primary{
-      background:linear-gradient(135deg,var(--accent),#845ef7);
-      color:white;
-      box-shadow:0 10px 24px rgba(108,124,255,0.28);
-    }
-
-    .btn-secondary{
-      background:rgba(255,255,255,0.08);
-      color:var(--text);
-      border:1px solid var(--line);
-    }
-
-    .btn-danger{
-      background:rgba(255,107,129,0.12);
-      color:#ff9fb0;
-      border:1px solid rgba(255,107,129,0.25);
-    }
-
-    .row{
-      display:flex;
-      gap:10px;
-    }
-
-    .row .btn{ flex:1; }
-
-    .profile{
-      display:flex;
-      align-items:center;
-      gap:12px;
-    }
-
-    .avatar{
-      width:46px;
-      height:46px;
-      border-radius:50%;
-      background:linear-gradient(135deg,#243a72,#6c7cff);
-      display:grid;
-      place-items:center;
-      font-size:17px;
-      font-weight:800;
-      flex-shrink:0;
-    }
-
-    .profile-meta h3{
-      margin:0;
-      font-size:15px;
-    }
-
-    .profile-meta p{
-      margin:4px 0 0;
-      color:var(--muted);
-      font-size:13px;
-    }
-
-    .room-box{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-
-    .tiny{
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.5;
-    }
-
-    .status-dot{
-      display:inline-block;
-      width:8px;
-      height:8px;
-      border-radius:50%;
-      background:#52d273;
-      margin-right:6px;
-      box-shadow:0 0 12px rgba(82,210,115,.8);
-    }
-
-    .main{
-      display:flex;
-      flex-direction:column;
-      min-width:0;
-    }
-
-    .topbar{
-      height:84px;
-      border-bottom:1px solid var(--line);
-      background:rgba(10,16,30,0.45);
-      backdrop-filter:blur(16px);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding:16px 22px;
-      gap:14px;
-    }
-
-    .chat-title{
-      display:flex;
-      flex-direction:column;
-      min-width:0;
-    }
-
-    .chat-title h2{
-      margin:0;
-      font-size:19px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .chat-title p{
-      margin:4px 0 0;
-      color:var(--muted);
-      font-size:13px;
-    }
-
-    .online-list{
-      color:var(--muted);
-      font-size:13px;
-      text-align:right;
-      max-width:46%;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .messages{
-      flex:1;
-      overflow:auto;
-      padding:22px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      scroll-behavior:smooth;
-    }
-
-    .empty{
-      margin:auto;
-      text-align:center;
-      color:var(--muted);
-      max-width:480px;
-      padding:30px;
-    }
-
-    .bubble-wrap{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      max-width:75%;
-    }
-
-    .bubble-wrap.me{
-      align-self:flex-end;
-      align-items:flex-end;
-    }
-
-    .bubble-wrap.other{
-      align-self:flex-start;
-      align-items:flex-start;
-    }
-
-    .sender{
-      font-size:12px;
-      color:var(--muted);
-      padding:0 8px;
-    }
-
-    .bubble{
-      position:relative;
-      border-radius:22px;
-      padding:12px 14px 10px;
-      line-height:1.45;
-      word-break:break-word;
-      box-shadow:var(--shadow);
-    }
-
-    .bubble.me{
-      background:linear-gradient(135deg,var(--accent),#8267ff);
-      color:white;
-      border-bottom-right-radius:8px;
-    }
-
-    .bubble.other{
-      background:rgba(255,255,255,0.08);
-      border:1px solid var(--line);
-      color:var(--text);
-      border-bottom-left-radius:8px;
-    }
-
-    .meta{
-      margin-top:6px;
-      display:flex;
-      justify-content:flex-end;
-      gap:8px;
-      font-size:11px;
-      opacity:.8;
-    }
-
-    .composer{
-      border-top:1px solid var(--line);
-      background:rgba(10,16,30,0.45);
-      backdrop-filter:blur(16px);
-      padding:14px 18px 18px;
-    }
-
-    .typing{
-      min-height:18px;
-      color:var(--muted);
-      font-size:12px;
-      padding:0 8px 10px;
-    }
-
-    .composer-row{
-      display:flex;
-      gap:12px;
-      align-items:end;
-    }
-
-    .textarea{
-      flex:1;
-      min-height:56px;
-      max-height:140px;
-      resize:none;
-      border:none;
-      outline:none;
-      border-radius:18px;
-      padding:16px 16px;
-      font-size:15px;
-      background:rgba(255,255,255,0.07);
-      color:var(--text);
-      border:1px solid transparent;
-    }
-
-    .textarea:focus{
-      border-color:rgba(108,124,255,0.9);
-      box-shadow:0 0 0 4px rgba(108,124,255,0.14);
-    }
-
-    .send-btn{
-      width:58px;
-      height:58px;
-      border-radius:18px;
-      border:none;
-      cursor:pointer;
-      background:linear-gradient(135deg,var(--accent-2),var(--accent));
-      color:white;
-      font-size:22px;
-      font-weight:900;
-      box-shadow:0 10px 24px rgba(76,226,181,0.18);
-    }
-
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 12px;
-      border-radius:999px;
-      background:rgba(255,255,255,0.06);
-      border:1px solid var(--line);
-      font-size:12px;
-      color:var(--muted);
-    }
-
-    .hidden{ display:none !important; }
-
-    @media (max-width: 900px){
-      .app{
-        grid-template-columns:1fr;
-      }
-      .sidebar{
-        display:none;
-      }
-      .topbar{
-        padding:14px 16px;
-        height:auto;
-        min-height:76px;
-      }
-      .messages{
-        padding:16px;
-      }
-      .bubble-wrap{
-        max-width:88%;
-      }
-      .online-list{
-        display:none;
-      }
-    }
+    body { font-family: Arial; background: #f5f5f5; margin: 0; padding:0;}
+    #chat { max-width: 600px; margin: auto; padding: 20px; }
+    .message { padding: 10px; margin:5px 0; border-radius:10px; display: inline-block; }
+    .me { background: #DCF8C6; float:right; clear:both;}
+    .other { background: #FFF; float:left; clear:both;}
+    #messages { min-height: 400px; border:1px solid #ccc; padding:10px; overflow-y: scroll; background:#fff;}
+    #inputArea { margin-top:10px; display:flex; }
+    #inputArea input { flex:1; padding:10px; border-radius:5px; border:1px solid #ccc; }
+    #inputArea button { padding:10px 15px; margin-left:5px; border:none; background:green; color:white; border-radius:5px; }
   </style>
 </head>
 <body>
-  <div class="app">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="logo">P</div>
-        <div class="brand-text">
-          <h1>PixelRoom</h1>
-          <p>Realtime chat with Firebase</p>
-        </div>
-      </div>
 
-      <div class="card">
-        <p class="section-title">Hesap</p>
-        <input id="usernameInput" class="input" maxlength="20" placeholder="Kullanıcı adın" />
-        <button id="saveNameBtn" class="btn btn-primary">Adı Kaydet</button>
-        <p class="tiny">İlk girişte anonim olarak bağlanır, görünen adın bu olur.</p>
-      </div>
-
-      <div class="card room-box">
-        <p class="section-title">Oda</p>
-        <input id="roomInput" class="input" maxlength="30" placeholder="Oda kodu örn: tayfa" />
-        <div class="row">
-          <button id="joinBtn" class="btn btn-primary">Odaya Gir</button>
-          <button id="leaveBtn" class="btn btn-danger">Çık</button>
-        </div>
-        <button id="randomRoomBtn" class="btn btn-secondary">Rastgele Oda Kodu</button>
-        <p class="tiny">Arkadaşlarınla aynı oda kodunu yazarsanız aynı sohbete girersiniz.</p>
-      </div>
-
-      <div class="card">
-        <p class="section-title">Durum</p>
-        <div class="profile">
-          <div id="avatar" class="avatar">?</div>
-          <div class="profile-meta">
-            <h3 id="profileName">Hazır değil</h3>
-            <p id="profileStatus">Bağlanıyor...</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <p class="section-title">Bilgi</p>
-        <div class="pill"><span class="status-dot"></span><span id="dbState">Firebase hazırlanıyor</span></div>
-        <p class="tiny" style="margin-top:10px">
-          Bu sürüm tek dosyalık profesyonel bir chat altyapısıdır. Metin mesajları gerçek zamanlı gönderir.
-        </p>
-      </div>
-    </aside>
-
-    <main class="main">
-      <header class="topbar">
-        <div class="chat-title">
-          <h2 id="roomTitle">Odaya girilmedi</h2>
-          <p id="roomSubtitle">Önce adını kaydet, sonra bir oda kodu ile giriş yap</p>
-        </div>
-        <div id="onlineList" class="online-list">Kimse bağlı değil</div>
-      </header>
-
-      <section id="messages" class="messages">
-        <div class="empty" id="emptyState">
-          <h3 style="margin-top:0;">PixelRoom hazır</h3>
-          <p>Soldan kullanıcı adını gir, bir oda kodu yaz ve arkadaşlarınla gerçek zamanlı konuşmaya başla.</p>
-        </div>
-      </section>
-
-      <footer class="composer">
-        <div id="typingText" class="typing"></div>
-        <div class="composer-row">
-          <textarea id="messageInput" class="textarea" placeholder="Mesaj yaz..." disabled></textarea>
-          <button id="sendBtn" class="send-btn" disabled>➤</button>
-        </div>
-      </footer>
-    </main>
+<div id="chat">
+  <h2>Web Chat App</h2>
+  <div id="messages"></div>
+  <div id="inputArea">
+    <input type="text" id="messageInput" placeholder="Mesaj yaz..." />
+    <button onclick="sendMessage()">Gönder</button>
+    <input type="file" id="fileInput" />
   </div>
+</div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
-    import {
-      getAuth,
-      signInAnonymously,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const storage = firebase.storage();
 
-    import {
-      getDatabase,
-      ref,
-      push,
-      set,
-      get,
-      onValue,
-      onDisconnect,
-      remove,
-      update,
-      serverTimestamp,
-      query,
-      limitToLast,
-      orderByChild
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+  const userId = prompt("Kullanıcı adını girin:");
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyABqkhpL1SMRzRJ9GQLjjZE2IryqpAvMPw",
-      authDomain: "pixelroom-ae218.firebaseapp.com",
-      databaseURL: "https://pixelroom-ae218-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "pixelroom-ae218",
-      storageBucket: "pixelroom-ae218.firebasestorage.app",
-      messagingSenderId: "720297722320",
-      appId: "1:720297722320:web:c815edae99d1efa7ff39d5",
-      measurementId: "G-HD8901B19M"
-    };
+  // Online durumu
+  const userRef = db.collection("users").doc(userId);
+  userRef.set({online:true});
+  window.addEventListener("beforeunload", () => {
+    userRef.update({online:false});
+  });
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
+  // Mesaj gönderme
+  async function sendMessage() {
+    const input = document.getElementById("messageInput");
+    if(input.value.trim() === "") return;
+    await db.collection("messages").add({
+      text: input.value,
+      sender: userId,
+      time: firebase.firestore.FieldValue.serverTimestamp(),
+      seen: false,
+      type: "text"
+    });
+    input.value = "";
+  }
 
-    try {
-      if (await isSupported()) getAnalytics(app);
-    } catch (e) {}
+  // Dosya gönderme
+  const fileInput = document.getElementById("fileInput");
+  fileInput.addEventListener("change", async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const ref = storage.ref('files/'+Date.now()+"_"+file.name);
+    await ref.put(file);
+    const url = await ref.getDownloadURL();
+    const type = file.type.startsWith("image") ? "image" : "video";
+    await db.collection("messages").add({
+      fileUrl: url,
+      sender: userId,
+      time: firebase.firestore.FieldValue.serverTimestamp(),
+      type: type,
+      seen: false
+    });
+    fileInput.value = "";
+  });
 
-    const els = {
-      usernameInput: document.getElementById("usernameInput"),
-      saveNameBtn: document.getElementById("saveNameBtn"),
-      roomInput: document.getElementById("roomInput"),
-      joinBtn: document.getElementById("joinBtn"),
-      leaveBtn: document.getElementById("leaveBtn"),
-      randomRoomBtn: document.getElementById("randomRoomBtn"),
-      avatar: document.getElementById("avatar"),
-      profileName: document.getElementById("profileName"),
-      profileStatus: document.getElementById("profileStatus"),
-      dbState: document.getElementById("dbState"),
-      roomTitle: document.getElementById("roomTitle"),
-      roomSubtitle: document.getElementById("roomSubtitle"),
-      messages: document.getElementById("messages"),
-      emptyState: document.getElementById("emptyState"),
-      messageInput: document.getElementById("messageInput"),
-      sendBtn: document.getElementById("sendBtn"),
-      typingText: document.getElementById("typingText"),
-      onlineList: document.getElementById("onlineList"),
-    };
+  // Mesajları gösterme ve okundu işareti
+  db.collection("messages").orderBy("time")
+    .onSnapshot(snapshot=>{
+      const messagesDiv = document.getElementById("messages");
+      messagesDiv.innerHTML = "";
+      snapshot.forEach(doc=>{
+        const m = doc.data();
+        const div = document.createElement("div");
+        div.className = "message " + (m.sender === userId ? "me" : "other");
+        if(m.type === "text") div.textContent = m.text;
+        if(m.type === "image") div.innerHTML = `<img src="${m.fileUrl}" width="200"/>`;
+        if(m.type === "video") div.innerHTML = `<video width="200" controls><source src="${m.fileUrl}"></video>`;
+        // okundu işareti
+        if(m.sender === userId) div.innerHTML += m.seen ? " ✔✔" : " ✔";
+        messagesDiv.appendChild(div);
 
-    let currentUser = null;
-    let currentRoom = null;
-    let username = localStorage.getItem("pixelroom_username") || "";
-    let unsubMessages = null;
-    let unsubPresence = null;
-    let unsubTyping = null;
-    let typingTimeout = null;
-
-    els.usernameInput.value = username;
-
-    function escapeHtml(str = "") {
-      return str
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    function formatTime(ts) {
-      if (!ts) return "";
-      const d = new Date(ts);
-      const hh = String(d.getHours()).padStart(2, "0");
-      const mm = String(d.getMinutes()).padStart(2, "0");
-      return `${hh}:${mm}`;
-    }
-
-    function initials(name) {
-      return (name || "?").trim().slice(0, 2).toUpperCase();
-    }
-
-    function setProfile() {
-      els.avatar.textContent = initials(username || "?");
-      els.profileName.textContent = username || "İsimsiz kullanıcı";
-      els.profileStatus.textContent = currentUser ? "Bağlandı" : "Bağlanıyor...";
-    }
-
-    function setDbState(text) {
-      els.dbState.textContent = text;
-    }
-
-    function saveUsername() {
-      const val = els.usernameInput.value.trim().replace(/\s+/g, " ");
-      if (!val || val.length < 2) {
-        alert("Kullanıcı adı en az 2 karakter olsun.");
-        return false;
-      }
-      username = val;
-      localStorage.setItem("pixelroom_username", username);
-      setProfile();
-      if (currentUser) {
-        update(ref(db, `users/${currentUser.uid}`), {
-          name: username,
-          updatedAt: Date.now()
-        }).catch(console.error);
-      }
-      return true;
-    }
-
-    function randomRoomCode() {
-      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-      let out = "room-";
-      for (let i = 0; i < 6; i++) out += chars[Math.floor(Math.random() * chars.length)];
-      els.roomInput.value = out.toLowerCase();
-    }
-
-    function cleanupRoomListeners() {
-      if (typeof unsubMessages === "function") unsubMessages();
-      if (typeof unsubPresence === "function") unsubPresence();
-      if (typeof unsubTyping === "function") unsubTyping();
-      unsubMessages = null;
-      unsubPresence = null;
-      unsubTyping = null;
-    }
-
-    function clearMessages() {
-      els.messages.innerHTML = "";
-      els.messages.appendChild(els.emptyState);
-      els.emptyState.classList.remove("hidden");
-    }
-
-    function renderMessages(data) {
-      els.messages.innerHTML = "";
-      const entries = Object.entries(data || {}).sort((a, b) => {
-        const ta = a[1]?.createdAt || 0;
-        const tb = b[1]?.createdAt || 0;
-        return ta - tb;
-      });
-
-      if (!entries.length) {
-        els.messages.appendChild(els.emptyState);
-        els.emptyState.classList.remove("hidden");
-        return;
-      }
-
-      els.emptyState.classList.add("hidden");
-
-      for (const [id, msg] of entries) {
-        const isMe = msg.uid === currentUser?.uid;
-
-        const wrap = document.createElement("div");
-        wrap.className = `bubble-wrap ${isMe ? "me" : "other"}`;
-
-        const sender = document.createElement("div");
-        sender.className = "sender";
-        sender.textContent = isMe ? "Sen" : (msg.name || "Bilinmeyen");
-
-        const bubble = document.createElement("div");
-        bubble.className = `bubble ${isMe ? "me" : "other"}`;
-        bubble.innerHTML = `
-          <div>${escapeHtml(msg.text || "")}</div>
-          <div class="meta">
-            <span>${formatTime(msg.createdAt)}</span>
-          </div>
-        `;
-
-        if (!isMe) wrap.appendChild(sender);
-        wrap.appendChild(bubble);
-        els.messages.appendChild(wrap);
-      }
-
-      els.messages.scrollTop = els.messages.scrollHeight;
-    }
-
-    async function leaveRoom() {
-      if (!currentUser || !currentRoom) return;
-
-      try {
-        await remove(ref(db, `rooms/${currentRoom}/presence/${currentUser.uid}`));
-        await remove(ref(db, `rooms/${currentRoom}/typing/${currentUser.uid}`));
-      } catch (e) {
-        console.error(e);
-      }
-
-      cleanupRoomListeners();
-      currentRoom = null;
-      els.roomTitle.textContent = "Odaya girilmedi";
-      els.roomSubtitle.textContent = "Önce adını kaydet, sonra bir oda kodu ile giriş yap";
-      els.onlineList.textContent = "Kimse bağlı değil";
-      els.typingText.textContent = "";
-      els.messageInput.value = "";
-      els.messageInput.disabled = true;
-      els.sendBtn.disabled = true;
-      clearMessages();
-    }
-
-    async function joinRoom() {
-      if (!currentUser) {
-        alert("Önce Firebase bağlantısı bitsin.");
-        return;
-      }
-
-      if (!saveUsername()) return;
-
-      const room = els.roomInput.value.trim().toLowerCase();
-      if (!room || room.length < 3) {
-        alert("Oda kodu en az 3 karakter olsun.");
-        return;
-      }
-
-      if (currentRoom === room) return;
-
-      await leaveRoom();
-      currentRoom = room;
-
-      els.roomTitle.textContent = `# ${room}`;
-      els.roomSubtitle.textContent = "Gerçek zamanlı sohbet aktif";
-      els.messageInput.disabled = false;
-      els.sendBtn.disabled = false;
-      els.messageInput.focus();
-
-      const userPresenceRef = ref(db, `rooms/${room}/presence/${currentUser.uid}`);
-      const userTypingRef = ref(db, `rooms/${room}/typing/${currentUser.uid}`);
-
-      await set(userPresenceRef, {
-        uid: currentUser.uid,
-        name: username,
-        joinedAt: Date.now(),
-        lastSeen: Date.now()
-      });
-
-      onDisconnect(userPresenceRef).remove();
-      onDisconnect(userTypingRef).remove();
-
-      unsubMessages = onValue(
-        query(ref(db, `rooms/${room}/messages`), orderByChild("createdAt"), limitToLast(200)),
-        (snap) => {
-          renderMessages(snap.val() || {});
-        },
-        (err) => {
-          console.error(err);
-        }
-      );
-
-      unsubPresence = onValue(ref(db, `rooms/${room}/presence`), (snap) => {
-        const users = Object.values(snap.val() || {});
-        if (!users.length) {
-          els.onlineList.textContent = "Kimse bağlı değil";
-          return;
-        }
-        const names = users.map(u => u.name || "Bilinmeyen");
-        els.onlineList.textContent = `${users.length} kişi online: ${names.join(", ")}`;
-      });
-
-      unsubTyping = onValue(ref(db, `rooms/${room}/typing`), (snap) => {
-        const val = snap.val() || {};
-        const typingUsers = Object.values(val)
-          .filter(item => item.uid !== currentUser.uid)
-          .map(item => item.name)
-          .filter(Boolean);
-
-        if (!typingUsers.length) {
-          els.typingText.textContent = "";
-        } else if (typingUsers.length === 1) {
-          els.typingText.textContent = `${typingUsers[0]} yazıyor...`;
-        } else {
-          els.typingText.textContent = `Birden fazla kişi yazıyor...`;
+        // Eğer ben alıcıysam seen=true yap
+        if(m.sender !== userId && !m.seen) {
+          doc.ref.update({seen:true});
         }
       });
-    }
-
-    async function sendMessage() {
-      const text = els.messageInput.value.trim();
-      if (!text || !currentUser || !currentRoom || !username) return;
-
-      try {
-        await push(ref(db, `rooms/${currentRoom}/messages`), {
-          uid: currentUser.uid,
-          name: username,
-          text,
-          createdAt: Date.now()
-        });
-
-        els.messageInput.value = "";
-        stopTyping();
-      } catch (e) {
-        console.error(e);
-        alert("Mesaj gönderilemedi.");
-      }
-    }
-
-    async function startTyping() {
-      if (!currentRoom || !currentUser || !username) return;
-
-      const typingRef = ref(db, `rooms/${currentRoom}/typing/${currentUser.uid}`);
-      await set(typingRef, {
-        uid: currentUser.uid,
-        name: username,
-        at: Date.now()
-      });
-
-      clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(stopTyping, 1400);
-    }
-
-    async function stopTyping() {
-      if (!currentRoom || !currentUser) return;
-      try {
-        await remove(ref(db, `rooms/${currentRoom}/typing/${currentUser.uid}`));
-      } catch (e) {}
-    }
-
-    els.saveNameBtn.addEventListener("click", saveUsername);
-    els.randomRoomBtn.addEventListener("click", randomRoomCode);
-    els.joinBtn.addEventListener("click", joinRoom);
-    els.leaveBtn.addEventListener("click", leaveRoom);
-    els.sendBtn.addEventListener("click", sendMessage);
-
-    els.messageInput.addEventListener("input", () => {
-      autoGrow(els.messageInput);
-      startTyping().catch(console.error);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
+</script>
 
-    els.messageInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
-
-    els.roomInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") joinRoom();
-    });
-
-    els.usernameInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") saveUsername();
-    });
-
-    function autoGrow(el) {
-      el.style.height = "56px";
-      el.style.height = Math.min(el.scrollHeight, 140) + "px";
-    }
-
-    async function init() {
-      setProfile();
-      setDbState("Firebase bağlanıyor...");
-
-      try {
-        await signInAnonymously(auth);
-      } catch (e) {
-        console.error(e);
-        setDbState("Auth hatası");
-        alert("Firebase Anonymous Auth kapalı olabilir.");
-      }
-
-      onAuthStateChanged(auth, async (user) => {
-        currentUser = user || null;
-
-        if (currentUser) {
-          setDbState("Bağlandı");
-          setProfile();
-
-          try {
-            await set(ref(db, `users/${currentUser.uid}`), {
-              uid: currentUser.uid,
-              name: username || "İsimsiz kullanıcı",
-              createdAt: Date.now(),
-              updatedAt: Date.now()
-            });
-          } catch (e) {
-            console.error(e);
-          }
-        } else {
-          setDbState("Bağlı değil");
-        }
-      });
-    }
-
-    init();
-  </script>
 </body>
 </html>
